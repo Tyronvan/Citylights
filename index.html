@@ -156,6 +156,16 @@
             opacity: 1;
             transform: scale(1.2);
         }
+        #redirect-trigger {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 150;
+            display: none;
+            background: transparent;
+        }
         .speed-up-text {
             position: absolute;
             top: 30%;
@@ -264,11 +274,13 @@
 </div>
 
 <script>
-    // GAME CONFIG
+    // GAME LOGIC - GEEN FIREBASE MEER!
     const MUSIC_URL = "tune.mp3";
     const SPOTIFY_URL = "https://open.spotify.com/artist/1mh3j5kMitpCGzNpHb01NC?si=GTx2lyj0QLy_j7HyrdHWWg"; 
     
-    // UI Elements
+    // Optioneel: Eigen motor afbeelding (base64)
+    const CUSTOM_MOTOR_IMAGE = ""; 
+
     const canvas = document.getElementById('motorCanvas');
     const ctx = canvas.getContext('2d');
     const scoreElement = document.getElementById('scoreText');
@@ -292,7 +304,11 @@
     if(spotifyLinkBtn) spotifyLinkBtn.href = SPOTIFY_URL;
     if(bgMusic) bgMusic.src = MUSIC_URL;
 
-    // GAME STATE
+    const playerImg = new Image();
+    if(CUSTOM_MOTOR_IMAGE && CUSTOM_MOTOR_IMAGE.length > 10) {
+        playerImg.src = CUSTOM_MOTOR_IMAGE;
+    }
+
     let width = 360, height = 640; 
     if (window.innerWidth > 0) {
         width = 360; 
@@ -318,7 +334,6 @@
     let buildings = [];
     let markers = []; 
 
-    // LYRICS
     const RAW_LYRICS = [
         "Ben ik in Miami dan voel ik me Tony Montana", "Geen Hannah of Beni", "Kijk naar m’n face op m’n oog zit een scar", "Ja ik word zelfs herkent met een bally", "Ben met een baddie ze komt van de block", "In de night kan ze zingen net Jenny", "Zuid ben in park met m’n Capuchon op", "Maar ik word niet gekiert net als Kenny", "Ben in m’n bag, ja ze fumbelen", "Whip in m’n trackies een Cullinan", "Kijk hoe ze mij nu behandelen", "(Kijk hoe ze mij nu behandelen)", "Kijk hoe ze mij nu behandelen", "Voet is te zwaar ga niet wandelen", "Kick Down, Kick Down, Steam", "MT-07 Machine", "", 
         "City Lights", "Blind m’n eyes", "In de night", "Corner Tight", "Corner Knee", "2B Speed", "Kick Down Steam", "Throttle Lean", "", 
@@ -355,6 +370,7 @@
         window.requestAnimationFrame(animate);
     }
 
+    // Start Handler
     function handleStart() {
         if (gameState === 'START') {
             startScreen.style.display = 'none';
