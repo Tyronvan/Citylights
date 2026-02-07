@@ -236,10 +236,13 @@
         #muteBtn:active { transform: scale(0.9); }
         
         #audio-status {
-            color: #666;
+            color: #999;
             font-size: 10px;
-            margin-top: 5px;
+            margin-top: 10px;
             font-family: monospace;
+            background: rgba(0,0,0,0.5);
+            padding: 4px 8px;
+            border-radius: 4px;
         }
     </style>
 </head>
@@ -260,8 +263,7 @@
     <div id="start-screen">
         <h1 class="text-4xl font-black mb-4 tracking-widest game-title">RACE TO LEVEL 100</h1>
         <p class="text-gray-400 animate-pulse uppercase tracking-widest text-sm">PRESS TO START ENGINE</p>
-        <p class="text-gray-600 text-[10px] mt-4">(Audio check: Zet je telefoon van stil af)</p>
-        <p id="audio-status">Status: Wachten...</p>
+        <p id="audio-status">Status: Wachten op initialisatie...</p>
     </div>
 
     <!-- INTRO OVERLAY -->
@@ -320,7 +322,14 @@
     };
 
     try {
-        const MUSIC_URL = "CITYLIGHTS.mp3"; 
+        // LIJST MET MOGELIJKE BESTANDSNAMEN
+        const MUSIC_URLS = [
+            "CITYLIGHTS.mp3",
+            "Citylights.mp3", 
+            "citylights.mp3",
+            "tune.mp3"
+        ];
+        
         const SPOTIFY_URL = "https://open.spotify.com/artist/1mh3j5kMitpCGzNpHb01NC?si=GTx2lyj0QLy_j7HyrdHWWg"; 
         const CUSTOM_MOTOR_IMAGE = ""; 
 
@@ -347,23 +356,44 @@
 
         if(spotifyLinkBtn) spotifyLinkBtn.href = SPOTIFY_URL;
         
-        // Audio setup met extra checks
+        // SLIMME AUDIO LADER MET STATUS UPDATES
+        let currentMusicIndex = 0;
+
+        function loadMusic() {
+            if(currentMusicIndex >= MUSIC_URLS.length) {
+                 if(audioStatus) {
+                     audioStatus.textContent = "Audio: Niet gevonden (Check naam op GitHub!)";
+                     audioStatus.style.color = "#ef4444";
+                 }
+                 return;
+            }
+
+            const url = MUSIC_URLS[currentMusicIndex];
+            console.log("Proberen te laden: " + url);
+            if(audioStatus) {
+                audioStatus.textContent = "Audio laden... (" + url + ")";
+                audioStatus.style.color = "#fbbf24"; // Oranje
+            }
+            bgMusic.src = url;
+            bgMusic.load();
+        }
+
         if(bgMusic) {
-            bgMusic.src = MUSIC_URL;
-            
-            bgMusic.addEventListener('canplaythrough', () => {
-                if(audioStatus) audioStatus.textContent = "Audio: Klaar (Tik om te starten)";
-                audioStatus.style.color = "#4ade80"; // Groen
+            // 'canplay' is sneller dan 'canplaythrough', goed voor grotere bestanden
+            bgMusic.addEventListener('canplay', () => {
+                if(audioStatus) {
+                     audioStatus.textContent = "Audio: Klaar (Tik om te starten)";
+                     audioStatus.style.color = "#4ade80"; // Groen
+                }
             });
             
             bgMusic.addEventListener('error', (e) => {
-                const err = bgMusic.error;
-                let msg = "Onbekend";
-                if(err.code === 4) msg = "Niet gevonden (404) - Check naam!";
-                if(err.code === 3) msg = "Decodeerfout";
-                if(audioStatus) audioStatus.textContent = "Audio Fout: " + msg;
-                if(audioStatus) audioStatus.style.color = "#ef4444"; // Rood
+                console.log("Fout bij laden: " + MUSIC_URLS[currentMusicIndex]);
+                currentMusicIndex++;
+                loadMusic(); // Probeer volgende optie
             });
+
+            loadMusic(); // Start eerste poging
         }
 
         const playerImg = new Image();
