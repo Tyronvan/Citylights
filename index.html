@@ -264,7 +264,7 @@
     <div id="start-screen">
         <h1 class="text-4xl font-black mb-4 tracking-widest game-title">RACE TO LEVEL 100</h1>
         <p class="text-gray-400 animate-pulse uppercase tracking-widest text-sm">PRESS TO START ENGINE</p>
-        <p id="audio-status">Status: Laden...</p>
+        <p id="audio-status">Status: Wachten op klik...</p>
     </div>
 
     <!-- INTRO OVERLAY -->
@@ -331,7 +331,7 @@
             "Citylights.mp3", 
             "citylights.mp3",
             "tune.mp3",
-            "CITYLIGHTS.mp3.mp3" // Voor het geval van dubbele extensie
+            "CITYLIGHTS.mp3.mp3" 
         ];
         
         const SPOTIFY_URL = "https://open.spotify.com/artist/1mh3j5kMitpCGzNpHb01NC?si=GTx2lyj0QLy_j7HyrdHWWg"; 
@@ -386,7 +386,6 @@
         }
 
         if(bgMusic) {
-            // 'canplay' is sneller dan 'canplaythrough', goed voor grotere bestanden
             bgMusic.addEventListener('canplay', () => {
                 if(audioStatus) {
                      audioStatus.textContent = "Audio: Klaar (Tik om te starten)";
@@ -397,10 +396,10 @@
             bgMusic.addEventListener('error', (e) => {
                 console.log("Fout bij laden: " + MUSIC_URLS[currentMusicIndex]);
                 currentMusicIndex++;
-                loadMusic(); // Probeer volgende optie
+                loadMusic(); 
             });
 
-            loadMusic(); // Start eerste poging
+            loadMusic(); 
         }
 
         const playerImg = new Image();
@@ -465,14 +464,15 @@
 
         function resize() {
             const container = document.getElementById('game-container');
-            width = container.clientWidth;
-            height = container.clientHeight;
-            
-            // Beperk max breedte intern voor desktop om speelveld eerlijk te houden
-            if (width > 500) width = 500;
-            
-            canvas.width = width;
-            canvas.height = height;
+            if(container) {
+                width = container.clientWidth;
+                height = container.clientHeight;
+                if (width === 0) width = window.innerWidth;
+                if (height === 0) height = window.innerHeight;
+                if (width > 500) width = 500;
+                canvas.width = width;
+                canvas.height = height;
+            }
         }
 
         function init() {
@@ -481,9 +481,8 @@
             window.requestAnimationFrame(animate);
         }
 
-        // Start Handler
         function handleStart(e) {
-            if(e) e.preventDefault();
+            if(e && e.type !== 'click') e.preventDefault();
             if (gameState === 'START') {
                 startScreen.style.display = 'none';
                 startIntro();
@@ -510,12 +509,10 @@
             }
 
             setTimeout(() => { if(introText1) introText1.classList.add('visible'); }, 2000);
-            
             setTimeout(() => { 
                 if(introText1) introText1.classList.remove('visible'); 
                 if(introText2) introText2.classList.add('visible');
             }, 4000);
-
             setTimeout(() => {
                 if(introText2) introText2.classList.remove('visible');
                 if(introOverlay) introOverlay.style.opacity = '0';
@@ -775,7 +772,7 @@
         function animate() {
             try {
                 // Critical debug: Ensure canvas dimensions
-                if (width === 0 || height === 0) resize();
+                if (width <= 0 || height <= 0) resize();
 
                 ctx.clearRect(0, 0, width, height);
                 drawRoad();
@@ -906,7 +903,6 @@
             log.textContent = "FATAL INIT ERROR: " + e;
         }
     }
-};
 </script>
 </body>
 </html>
