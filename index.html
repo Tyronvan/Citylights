@@ -1,813 +1,258 @@
 <!DOCTYPE html>
 <html lang="nl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Race to Level 100</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        /* Basis instellingen */
-        html, body {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            background: #0f172a;
-            font-family: 'Helvetica', 'Arial', sans-serif;
-            user-select: none;
-            -webkit-user-select: none;
-            touch-action: none;
-            height: 100dvh; 
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Race to Level 100</title>
 
-        #game-container {
-            position: relative;
-            width: 100%;
-            height: 100%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background: #1e293b;
-        }
+<script src="https://cdn.tailwindcss.com"></script>
 
-        canvas {
-            display: block;
-            width: 100%;
-            height: 100%;
-            max-width: 500px; 
-            background: #334155;
-            box-shadow: 0 0 50px rgba(0,0,0,0.8);
-        }
+<style>
+html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: #0f172a;
+    font-family: Helvetica, Arial, sans-serif;
+    user-select: none;
+    touch-action: none;
+}
 
-        /* Error Logger (Rood scherm bij fouten) */
-        #error-log {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            background: rgba(220, 38, 38, 0.95);
-            color: white;
-            font-size: 12px;
-            padding: 10px;
-            z-index: 9999;
-            display: none;
-            white-space: pre-wrap;
-            font-family: monospace;
-        }
+#game-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #1e293b;
+}
 
-        /* UI */
-        .score-container {
-            position: absolute;
-            top: env(safe-area-inset-top, 20px);
-            left: 20px;
-            background: rgba(0, 0, 0, 0.9);
-            padding: 12px 18px;
-            border-radius: 8px;
-            border-left: 5px solid #00f2ff;
-            color: white;
-            pointer-events: none;
-            z-index: 10;
-            display: flex;
-            flex-direction: column;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-            transition: opacity 0.5s;
-        }
+canvas {
+    width: 100%;
+    height: 100%;
+    max-width: 500px;
+    background: #334155;
+}
 
-        #subtitle-container {
-            position: absolute;
-            bottom: 25%;
-            width: 100%;
-            text-align: center;
-            pointer-events: none;
-            z-index: 20;
-            padding: 0 20px;
-        }
+#start-screen {
+    position: absolute;
+    inset: 0;
+    background: black;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    z-index: 100;
+    cursor: pointer;
+    text-align: center;
+}
 
-        .subtitle-text {
-            color: #FCBE11;
-            font-family: 'Helvetica', 'Arial', sans-serif;
-            font-style: italic;
-            font-weight: 900;
-            font-size: clamp(18px, 5vw, 24px);
-            text-transform: uppercase;
-            text-shadow: -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000, 0px 4px 10px rgba(0,0,0,0.8);
-            opacity: 0;
-            transform: translateY(10px);
-            transition: opacity 0.15s ease-out, transform 0.15s ease-out;
-        }
-        .subtitle-text.visible { opacity: 1; transform: translateY(0); }
+#intro-overlay {
+    position: absolute;
+    inset: 0;
+    background: black;
+    z-index: 90;
+    display: none;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}
 
-        #game-over {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.95);
-            display: none;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            color: white;
-            z-index: 100;
-            text-align: center;
-            padding: 20px;
-        }
+.intro-text {
+    color: #FCBE11;
+    font-weight: 900;
+    font-size: clamp(30px, 8vw, 60px);
+    opacity: 0;
+    transition: opacity 0.5s;
+}
 
-        #start-screen {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: black;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            color: white;
-            z-index: 400;
-            cursor: pointer;
-            text-align: center;
-        }
+.intro-text.visible { opacity: 1; }
 
-        .game-title {
-            color: #FCBE11;
-            font-family: 'Helvetica', 'Arial', sans-serif;
-            font-style: italic;
-            text-shadow: 0 0 20px rgba(252, 190, 17, 0.3);
-            text-align: center;
-            width: 100%;
-            padding: 0 20px;
-        }
+.countdown-text {
+    font-size: clamp(80px, 20vw, 150px);
+    font-weight: 900;
+    color: #FCBE11;
+    opacity: 0;
+    transform: scale(0.5);
+    transition: all 0.2s;
+}
 
-        #intro-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: black;
-            z-index: 300;
-            display: none;
-            justify-content: center;
-            align-items: center;
-            flex-direction: column;
-            pointer-events: none;
-            transition: opacity 3s ease-in-out;
-        }
+.countdown-text.pop {
+    opacity: 1;
+    transform: scale(1.2);
+}
 
-        .intro-text {
-            color: #FCBE11;
-            font-family: 'Helvetica', 'Arial', sans-serif;
-            font-style: italic;
-            font-weight: 900;
-            font-size: clamp(30px, 8vw, 60px);
-            text-transform: uppercase;
-            text-shadow: 0 0 20px rgba(252, 190, 17, 0.5);
-            opacity: 0;
-            transition: opacity 0.5s ease-in-out;
-            text-align: center;
-            position: absolute;
-            width: 100%;
-            padding: 0 20px;
-        }
-        .intro-text.visible { opacity: 1; }
-        
-        .countdown-text {
-            font-size: clamp(80px, 20vw, 150px);
-            font-weight: 900;
-            color: #FCBE11;
-            text-shadow: 0 0 30px rgba(252, 190, 17, 0.6);
-            opacity: 0;
-            transform: scale(0.5);
-            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-        .countdown-text.pop {
-            opacity: 1;
-            transform: scale(1.2);
-        }
+.score-container {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    background: black;
+    padding: 10px 15px;
+    border-radius: 8px;
+    color: white;
+    opacity: 0;
+}
 
-        .speed-up-text {
-            position: absolute;
-            top: 30%;
-            left: 50%;
-            transform: translate(-50%, -50%) scale(0.5);
-            color: #ef4444;
-            font-size: clamp(30px, 8vw, 48px);
-            font-weight: 900;
-            font-style: italic;
-            text-shadow: 0 0 15px rgba(255,0,0,0.8);
-            opacity: 0;
-            pointer-events: none;
-            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            white-space: nowrap;
-            z-index: 20;
-        }
-        .speed-up-text.active { opacity: 1; transform: translate(-50%, -50%) scale(1.0); }
-
-        .crash-effect { animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both; }
-        @keyframes shake {
-            10%, 90% { transform: translate3d(-2px, 0, 0); }
-            20%, 80% { transform: translate3d(4px, 0, 0); }
-            30%, 50%, 70% { transform: translate3d(-8px, 0, 0); }
-            40%, 60% { transform: translate3d(8px, 0, 0); }
-        }
-
-        #muteBtn {
-            position: absolute;
-            top: env(safe-area-inset-top, 20px);
-            right: 20px;
-            z-index: 50;
-            background: rgba(0,0,0,0.6);
-            color: white;
-            border: 2px solid rgba(255,255,255,0.2);
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.2s;
-            display: none;
-        }
-        #muteBtn:active { transform: scale(0.9); }
-        
-        #audio-status {
-            color: #666;
-            font-size: 10px;
-            margin-top: 5px;
-            font-family: monospace;
-            background: rgba(0,0,0,0.5);
-            padding: 4px 8px;
-            border-radius: 4px;
-        }
-    </style>
+#game-over {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.95);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    color: white;
+    z-index: 200;
+}
+</style>
 </head>
+
 <body>
 
-<!-- ERROR LOGGER -->
-<div id="error-log"></div>
-
-<!-- AUDIO ELEMENT -->
 <audio id="bgMusic" loop preload="auto" playsinline></audio>
 
-<!-- GAME CONTAINER -->
 <div id="game-container">
-    <canvas id="motorCanvas"></canvas>
-    
-    <div id="muteBtn">🔊</div>
+<canvas id="motorCanvas"></canvas>
 
-    <!-- START SCREEN -->
-    <div id="start-screen">
-        <h1 class="text-4xl font-black mb-4 tracking-widest game-title">RACE TO LEVEL 100</h1>
-        <p class="text-gray-400 animate-pulse uppercase tracking-widest text-sm">PRESS TO START ENGINE</p>
-        <p id="audio-status">Status: Laden...</p>
-    </div>
+<div id="start-screen">
+    <h1 class="text-4xl font-black mb-4 text-yellow-400">RACE TO LEVEL 100</h1>
+    <p class="opacity-60 animate-pulse">TAP TO START</p>
+    <p id="audio-status" class="text-xs mt-2 opacity-50">Audio laden…</p>
+</div>
 
-    <!-- INTRO OVERLAY -->
-    <div id="intro-overlay">
-        <div id="intro-text-1" class="intro-text">LYNCH AUTOMATIC</div>
-        <div id="intro-text-2" class="intro-text">CITYLIGHTS - DAMICO</div>
-        <div id="countdown" class="countdown-text">3</div>
-    </div>
+<div id="intro-overlay">
+    <div id="intro-text-1" class="intro-text">LYNCH AUTOMATIC</div>
+    <div id="intro-text-2" class="intro-text">CITYLIGHTS – DAMICO</div>
+    <div id="countdown" class="countdown-text">3</div>
+</div>
 
-    <!-- HUD -->
-    <div class="score-container" id="scoreContainer" style="opacity: 0;">
-        <span class="text-[10px] uppercase tracking-[0.2em] opacity-60 leading-none mb-1">SCORE</span>
-        <div class="flex items-baseline gap-2">
-            <span id="scoreText" class="text-4xl font-black leading-none font-mono">0</span>
-        </div>
-        <div class="h-1 w-full bg-gray-700 mt-2 rounded overflow-hidden">
-            <div id="difficultyBar" class="h-full bg-red-500 w-0 transition-all duration-300"></div>
-        </div>
-        <span id="speedDisplay" class="text-[9px] text-right mt-1 opacity-50 text-cyan-400 font-bold">SPEED: 100%</span>
-    </div>
+<div class="score-container" id="scoreContainer">
+    SCORE: <span id="scoreText">0</span>
+</div>
 
-    <!-- LYRICS -->
-    <div id="subtitle-container">
-        <div id="subtitleText" class="subtitle-text"></div>
-    </div>
+<div id="game-over">
+    <h2 class="text-4xl font-black text-red-600">GAME OVER</h2>
+    <p class="mt-2">Score: <span id="finalScore">0</span></p>
+</div>
 
-    <div id="speedUpText" class="speed-up-text">SPEED UP!</div>
-
-    <!-- GAME OVER -->
-    <div id="game-over">
-        <h2 class="text-5xl font-black text-red-600 mb-2 italic uppercase tracking-tighter">TOTAL LOSS</h2>
-        <p class="text-cyan-400 text-sm mb-4 font-bold animate-pulse uppercase tracking-widest">Luister naar DAMICO op Spotify</p>
-        
-        <div class="bg-gray-800 p-4 rounded-xl mb-4 border border-gray-700 w-full max-w-xs">
-            <p class="text-xs uppercase opacity-50 tracking-widest mb-1">Je score</p>
-            <p id="finalScore" class="text-4xl font-bold text-white font-mono">0</p>
-        </div>
-
-        <div class="flex flex-col gap-3 w-full max-w-xs relative mt-2">
-            <button id="restartBtn" class="bg-white hover:bg-gray-200 text-black font-black py-3 px-10 rounded-full transition-all transform hover:scale-105 active:scale-95 text-lg uppercase tracking-widest">
-                OPNIEUW
-            </button>
-            <a id="spotifyLink" href="#" target="_blank" class="bg-[#1DB954] hover:bg-[#1ed760] text-white font-black py-3 px-10 rounded-full transition-all flex items-center justify-center gap-2 text-sm uppercase shadow-lg transform hover:scale-105 active:scale-95">
-                <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 0C5.372 0 0 5.372 0 12s5.372 12 12 12 12-5.372 12-12S18.628 0 12 0zm5.508 17.302c-.216.354-.673.468-1.026.252-2.852-1.742-6.442-2.136-10.672-1.168-.404.093-.812-.162-.904-.565-.094-.403.161-.812.565-.904 4.63-1.06 8.583-.615 11.785 1.339.352.216.466.673.252 1.026zm1.47-3.255c-.272.441-.846.581-1.287.31-3.264-2.006-8.241-2.589-12.102-1.416-.496.15-1.022-.132-1.173-.628-.15-.496.133-1.022.628-1.173 4.408-1.337 9.892-.686 13.624 1.609.442.271.582.846.31 1.287zm.126-3.414C15.24 8.243 8.847 8.03 5.12 9.162c-.572.173-1.175-.152-1.348-.724-.173-.572.152-1.175.724-1.348 4.286-1.3 11.353-1.055 15.82 1.597.514.306.684.969.378 1.483-.306.513-.969.684-1.483.378z"/></svg>
-                OPEN SPOTIFY
-            </a>
-        </div>
-    </div>
 </div>
 
 <script>
-    // --- GLOBALE VARIABELEN ---
-    let width = 360, height = 640;
-    let bikeX = 0, targetBikeX = 0;
-    let laneOffset = 0;
-    let score = 0;
-    let isGameOver = false;
-    let musicStarted = false;
-    let isMuted = false;
-    let gameFrame = 0;
-    let gameState = 'START';
-    let baseSpeed = 13;
-    let currentTier = 0;
-    let laneChangeChance = 0.003;
-    let cars = [], roadSigns = [], buildings = [], markers = [];
-    let currentMusicIndex = 0;
+// ===== BASIS =====
+const canvas = document.getElementById("motorCanvas");
+const ctx = canvas.getContext("2d");
+const bgMusic = document.getElementById("bgMusic");
 
-    // --- CONFIGURATIE ---
-    const MUSIC_URLS = [
-        "CITYLIGHTSmp3.mp3",
-        "CITYLIGHTS.mp3",
-        "Citylights.mp3", 
-        "citylights.mp3",
-        "tune.mp3",
-        "CITYLIGHTS.mp3.mp3" // Voor het geval van dubbele extensie
-    ];
-    const SPOTIFY_URL = "https://open.spotify.com/artist/1mh3j5kMitpCGzNpHb01NC?si=GTx2lyj0QLy_j7HyrdHWWg";
+const startScreen = document.getElementById("start-screen");
+const introOverlay = document.getElementById("intro-overlay");
+const introText1 = document.getElementById("intro-text-1");
+const introText2 = document.getElementById("intro-text-2");
+const countdownText = document.getElementById("countdown");
+const scoreContainer = document.getElementById("scoreContainer");
+const scoreText = document.getElementById("scoreText");
+const gameOverScreen = document.getElementById("game-over");
+const finalScore = document.getElementById("finalScore");
+const audioStatus = document.getElementById("audio-status");
 
-    // --- ELEMENTEN ---
-    const canvas = document.getElementById('motorCanvas');
-    const ctx = canvas.getContext('2d');
-    const bgMusic = document.getElementById('bgMusic');
-    const audioStatus = document.getElementById('audio-status');
-    const spotifyLinkBtn = document.getElementById('spotifyLink');
-    const startScreen = document.getElementById('start-screen');
-    const scoreElement = document.getElementById('scoreText');
-    const difficultyBar = document.getElementById('difficultyBar');
-    const speedDisplay = document.getElementById('speedDisplay');
-    const subtitleElement = document.getElementById('subtitleText');
-    const gameOverScreen = document.getElementById('game-over');
-    const finalScoreElement = document.getElementById('finalScore');
-    const introOverlay = document.getElementById('intro-overlay');
-    const introText1 = document.getElementById('intro-text-1');
-    const introText2 = document.getElementById('intro-text-2');
-    const countdownText = document.getElementById('countdown');
-    const scoreContainer = document.getElementById('scoreContainer');
-    const muteBtn = document.getElementById('muteBtn');
-    const speedUpText = document.getElementById('speedUpText');
-    const restartBtn = document.getElementById('restartBtn');
+let width, height;
+let gameState = "START";
+let score = 0;
 
-    // --- HITBOXES & TYPES ---
-    const bikeHitBox = { w: 20, h: 50 };
-    const OBSTACLE_TYPES = {
-        GOLF: 'golf', TESLA: 'tesla', GWAGON: 'gwagon', PORSCHE: 'porsche', VAN: 'van', MOTOR_RIVAL: 'motor_rival', POLICE: 'police'
-    };
+// ===== AUDIO =====
+const MUSIC_URLS = ["./CITYLIGHTS.mp3"];
+let currentMusicIndex = 0;
 
-    // --- LYRICS ---
-    const RAW_LYRICS = [
-        "Ben ik in Miami dan voel ik me Tony Montana", "Geen Hannah of Beni", "Kijk naar m’n face op m’n oog zit een scar", "Ja ik word zelfs herkent met een bally", "Ben met een baddie ze komt van de block", "In de night kan ze zingen net Jenny", "Zuid ben in park met m’n Capuchon op", "Maar ik word niet gekiert net als Kenny", "Ben in m’n bag, ja ze fumbelen", "Whip in m’n trackies een Cullinan", "Kijk hoe ze mij nu behandelen", "(Kijk hoe ze mij nu behandelen)", "Kijk hoe ze mij nu behandelen", "Voet is te zwaar ga niet wandelen", "Kick Down, Kick Down, Steam", "MT-07 Machine", "", 
-        "City Lights", "Blind m’n eyes", "In de night", "Corner Tight", "Corner Knee", "2B Speed", "Kick Down Steam", "Throttle Lean", "", 
-        "Rims zij kapot en m’n banden geburned", "Mannen niet spits, ja ze hitten de curb", "Zij noemt me ‘U’, maar ik ben niet eens turned", "Ik noem d’r ‘Jhené’, want ze vind me the worst", "Zie niet eens color, maar ben met de nerds", "Money is calling, maar family first", "Ik zag het als spel en nu ben ik gecursed", "What happened to Dami? Ik voel me net Durk", "", 
-        "Turnen geen key voor de start", "Ik voel geen speed in de dark", "M’n uitlaat die zegt alleen bark", "Ben met de dogs in de yard", "Turnen geen key voor de start", "Ik voel geen speed in de dark", "M’n uitlaat die zegt alleen bark", "Ben met de dogs in de yard", "", 
-        "City Lights", "Blind m’n eyes", "In de night", "Corner Tight", "Corner Knee", "2B Speed", "Kick Down Steam", "Throttle Lean"
-    ];
+function loadNextAudio() {
+    bgMusic.src = MUSIC_URLS[currentMusicIndex];
+}
 
-    const LYRIC_TIMINGS = [];
-    let currentFrame = 30; const DURATION = 103; const GAP = 6; const EMPTY_GAP = 29;   
-    RAW_LYRICS.forEach(line => {
-        if (line === "") { currentFrame += EMPTY_GAP; } 
-        else {
-            LYRIC_TIMINGS.push({ start: currentFrame, text: line });
-            LYRIC_TIMINGS.push({ start: currentFrame + DURATION, text: "" });
-            currentFrame += DURATION + GAP;
+bgMusic.addEventListener("canplay", () => {
+    audioStatus.textContent = "Audio klaar – tap om te starten";
+});
+
+bgMusic.addEventListener("error", () => {
+    audioStatus.textContent = "Audio niet gevonden";
+});
+
+// ===== RESIZE =====
+function resize() {
+    width = Math.min(window.innerWidth, 500);
+    height = window.innerHeight;
+    canvas.width = width;
+    canvas.height = height;
+}
+
+// ===== START =====
+function handleStart() {
+    if (gameState !== "START") return;
+    gameState = "INTRO";
+    startScreen.style.display = "none";
+    introOverlay.style.display = "flex";
+
+    bgMusic.play().catch(()=>{});
+
+    setTimeout(()=>introText1.classList.add("visible"), 1000);
+    setTimeout(()=>{
+        introText1.classList.remove("visible");
+        introText2.classList.add("visible");
+    }, 3000);
+
+    setTimeout(()=>{
+        introText2.classList.remove("visible");
+        runCountdown();
+    }, 5000);
+}
+
+// ===== COUNTDOWN =====
+function runCountdown() {
+    let c = 3;
+    countdownText.textContent = c;
+    countdownText.classList.add("pop");
+
+    const i = setInterval(()=>{
+        c--;
+        if (c > 0) {
+            countdownText.textContent = c;
+        } else {
+            clearInterval(i);
+            startGame();
         }
-    });
+    }, 1000);
+}
 
-    // --- FUNCTIES ---
+function startGame() {
+    introOverlay.style.display = "none";
+    scoreContainer.style.opacity = "1";
+    gameState = "PLAYING";
+}
 
-    function showError(msg) {
-        const log = document.getElementById('error-log');
-        if(log) {
-            log.style.display = 'block';
-            log.textContent = "FOUT: " + msg;
-        }
+// ===== GAME LOOP =====
+function animate() {
+    ctx.clearRect(0,0,width,height);
+
+    ctx.fillStyle = "#334155";
+    ctx.fillRect(0,0,width,height);
+
+    if (gameState === "PLAYING") {
+        score++;
+        scoreText.textContent = score;
     }
 
-    // Audio Lader
-    function loadNextAudio() {
-        if(currentMusicIndex >= MUSIC_URLS.length) {
-            if(audioStatus) {
-                audioStatus.textContent = "Audio: Niet gevonden.";
-                audioStatus.style.color = "#ef4444";
-            }
-            return;
-        }
-        const url = MUSIC_URLS[currentMusicIndex];
-        console.log("Proberen te laden: " + url);
-        if(audioStatus) {
-            audioStatus.textContent = "Laden: " + url;
-            audioStatus.style.color = "#fbbf24";
-        }
-        bgMusic.src = url;
-    }
+    requestAnimationFrame(animate);
+}
 
-    // Audio Events
-    bgMusic.addEventListener('canplay', () => {
-        if(audioStatus) {
-            audioStatus.textContent = "Audio: Klaar (Tik om te starten)";
-            audioStatus.style.color = "#4ade80";
-        }
-    });
+// ===== INIT =====
+resize();
+loadNextAudio();
+animate();
 
-    bgMusic.addEventListener('error', (e) => {
-        console.log("Fout bij: " + MUSIC_URLS[currentMusicIndex]);
-        currentMusicIndex++;
-        loadNextAudio();
-    });
-
-    // Resize
-    function resize() {
-        const container = document.getElementById('game-container');
-        if (container) {
-            let cw = container.clientWidth;
-            let ch = container.clientHeight;
-            if (cw === 0) cw = window.innerWidth;
-            if (ch === 0) ch = window.innerHeight;
-            
-            width = Math.min(cw, 500); // Max 500px breed
-            height = ch;
-            canvas.width = width;
-            canvas.height = height;
-        }
-    }
-
-    // Start
-    function handleStart(e) {
-        if(e && e.type !== 'click') e.preventDefault();
-        if (gameState === 'START') {
-            startScreen.style.display = 'none';
-            resize();
-            bikeX = width / 2;
-            targetBikeX = width / 2;
-            startIntro();
-        }
-    }
-
-    function startIntro() {
-        gameState = 'INTRO';
-        introOverlay.style.display = 'flex';
-        
-        if (!musicStarted && !isMuted) {
-            bgMusic.volume = 1.0; 
-            bgMusic.play()
-                .then(() => { musicStarted = true; })
-                .catch(error => { console.log("Audio play failed: " + error); });
-        }
-
-        setTimeout(() => { if(introText1) introText1.classList.add('visible'); }, 2000);
-        setTimeout(() => { if(introText1) introText1.classList.remove('visible'); if(introText2) introText2.classList.add('visible'); }, 4000);
-        setTimeout(() => {
-            if(introText2) introText2.classList.remove('visible');
-            if(introOverlay) introOverlay.style.opacity = '0';
-            runCountdown();
-        }, 9000);
-    }
-
-    function runCountdown() {
-        let count = 3;
-        if(countdownText) { countdownText.textContent = count; countdownText.classList.add('pop'); }
-        let timer = setInterval(() => {
-            count--;
-            if (count > 0) {
-                if(countdownText) {
-                    countdownText.classList.remove('pop');
-                    void countdownText.offsetWidth; 
-                    countdownText.textContent = count;
-                    countdownText.classList.add('pop');
-                }
-            } else {
-                clearInterval(timer);
-                if(countdownText) countdownText.classList.remove('pop');
-                startGameplay();
-            }
-        }, 1000);
-    }
-
-    function startGameplay() {
-        gameState = 'PLAYING';
-        introOverlay.style.display = 'none';
-        scoreContainer.style.opacity = '1';
-        muteBtn.style.display = 'flex';
-    }
-
-    // Game Logic
-    function resetGame() {
-        score = 0;
-        currentTier = 0;
-        laneOffset = 0;
-        baseSpeed = 13; 
-        laneChangeChance = 0.003;
-        bikeX = width / 2;
-        targetBikeX = width / 2;
-        gameFrame = 0;
-        isGameOver = false;
-        cars = []; roadSigns = []; buildings = []; markers = [];
-        
-        scoreElement.textContent = "0";
-        difficultyBar.style.width = "0%";
-        speedDisplay.textContent = "SPEED: 100%";
-        subtitleElement.textContent = "";
-        subtitleElement.classList.remove('visible');
-        gameOverScreen.style.display = 'none';
-        canvas.classList.remove('crash-effect');
-        scoreContainer.style.opacity = '0';
-        
-        if(introOverlay) {
-            introOverlay.style.opacity = '1';
-            introOverlay.style.display = 'none'; 
-            introText1.classList.remove('visible');
-            introText2.classList.remove('visible');
-        }
-
-        spawnObstacle(-300); spawnObstacle(-600); spawnObstacle(-900);
-        spawnSign(-300); spawnSign(-900);
-        for(let i = 0; i < 6; i++) spawnBuilding(Math.random() * height);
-        for(let i = 0; i < 5; i++) spawnMarker(i * -200);
-    }
-
-    function spawnObstacle(yPos) {
-        if(width <= 0) return;
-        const laneWidth = width / 3;
-        let chosenLane = -1;
-        for(let i=0; i<15; i++) {
-            const tempLane = Math.floor(Math.random() * 3);
-            const minGap = Math.max(220, 320 - (score * 1.5));
-            const blocked = cars.some(c => (c.currentLane === tempLane || c.targetLane === tempLane) && Math.abs(c.y - yPos) < minGap);
-            if(!blocked) { chosenLane = tempLane; break; }
-        }
-        if(chosenLane === -1) return;
-
-        const rand = Math.random();
-        let type, obsW, obsH, color, isBike = false;
-        const scale = width / 360; 
-
-        if (rand > 0.92) { type = OBSTACLE_TYPES.MOTOR_RIVAL; obsW = 22*scale; obsH = 50*scale; isBike = true; color = ['#ef4444', '#22c55e', '#a855f7'][Math.floor(Math.random() * 3)]; } 
-        else if (rand > 0.85) { type = OBSTACLE_TYPES.POLICE; obsW = 70*scale; obsH = 125*scale; color = '#ffffff'; } 
-        else if (rand > 0.70) { type = OBSTACLE_TYPES.PORSCHE; obsW = 72*scale; obsH = 125*scale; color = Math.random() > 0.5 ? '#eab308' : '#dc2626'; } 
-        else if (rand > 0.55) { type = OBSTACLE_TYPES.GWAGON; obsW = 78*scale; obsH = 135*scale; color = '#171717'; } 
-        else if (rand > 0.40) { type = OBSTACLE_TYPES.VAN; obsW = 75*scale; obsH = 145*scale; color = '#f1f5f9'; } 
-        else if (rand > 0.25) { type = OBSTACLE_TYPES.TESLA; obsW = 74*scale; obsH = 130*scale; color = Math.random() > 0.5 ? '#334155' : '#ffffff'; } 
-        else { type = OBSTACLE_TYPES.GOLF; obsW = 68*scale; obsH = 115*scale; color = `hsl(${Math.random() * 360}, 40%, 45%)`; }
-
-        cars.push({ x: (chosenLane * laneWidth) + (laneWidth / 2) - (obsW / 2), y: yPos, width: obsW, height: obsH, type, color, isBike, speedOffset: (Math.random() * 6 - 3), passed: false, currentLane: chosenLane, targetLane: chosenLane, isChangingLane: false, rotation: 0 });
-    }
-
-    function spawnSign(yPos) { 
-        const texts = ["A10 RING", "CENTRUM", "S102 SLOTERDIJK", "SCHIPHOL"];
-        roadSigns.push({ y: yPos, text: texts[Math.floor(Math.random() * texts.length)] }); 
-    }
-    
-    function spawnBuilding(y) { buildings.push({ x: Math.random() > 0.5 ? -160 : width + 20, y: y, w: 140, h: 500, color: '#1e293b' }); }
-    function spawnMarker(y) { markers.push({ y: y, val: (60 + Math.random() * 20).toFixed(1) }); }
-
-    function updateDifficulty() {
-        let nextThreshold = 15 + (currentTier * 10);
-        if (score >= nextThreshold) {
-            currentTier++;
-            baseSpeed = Math.min(baseSpeed * 1.25, 35);
-            speedUpText.classList.add('active');
-            setTimeout(() => speedUpText.classList.remove('active'), 1200);
-            laneChangeChance = Math.min(0.03, 0.003 + (currentTier * 0.002));
-            speedDisplay.textContent = `SPEED: ${Math.round((baseSpeed / 13) * 100)}%`;
-        }
-        let progress = score < 15 ? (score/15)*100 : ((score-15)%10)/10*100;
-        difficultyBar.style.width = `${progress}%`;
-    }
-
-    function updateSubtitles() {
-        const lyric = LYRIC_TIMINGS.find(t => t.start === gameFrame);
-        if (lyric) {
-            if (lyric.text === "") {
-                subtitleElement.classList.remove('visible');
-            } else {
-                subtitleElement.textContent = lyric.text;
-                subtitleElement.classList.add('visible');
-            }
-        }
-    }
-
-    function checkCollision(bx, by, car) {
-        const b = 2;
-        return (bx - 10 + b < car.x + car.width && bx + 10 - b > car.x && by - 25 + b < car.y + car.height && by + 25 - b > car.y);
-    }
-
-    function triggerGameOver() {
-        if (isGameOver) return;
-        isGameOver = true;
-        gameState = 'GAMEOVER';
-        finalScoreElement.textContent = score;
-        gameOverScreen.style.display = 'flex';
-        canvas.classList.add('crash-effect');
-        if (!isMuted) bgMusic.pause();
-        subtitleElement.textContent = "";
-        try { window.open(SPOTIFY_URL, '_blank'); } catch (e) {}
-    }
-
-    // DRAWING
-    function drawRoad() {
-        ctx.fillStyle = "#334155"; ctx.fillRect(0, 0, width, height);
-        ctx.fillStyle = "white"; ctx.fillRect(10, 0, 4, height); ctx.fillRect(width - 14, 0, 4, height);
-        ctx.strokeStyle = "rgba(255, 255, 255, 0.5)"; ctx.setLineDash([40, 50]); ctx.lineDashOffset = -laneOffset; ctx.lineWidth = 4;
-        ctx.beginPath(); ctx.moveTo(width/3, 0); ctx.lineTo(width/3, height); ctx.moveTo(width/3*2, 0); ctx.lineTo(width/3*2, height); ctx.stroke();
-        ctx.setLineDash([]);
-        if (gameState === 'PLAYING' || (gameState === 'INTRO' && introOverlay.style.opacity === '0')) laneOffset += baseSpeed;
-    }
-
-    function drawHectometer(y, val) {
-        const mx = width - 35;
-        ctx.fillStyle = "#064e3b"; ctx.beginPath(); ctx.roundRect(mx, y, 22, 42, 2); ctx.fill();
-        ctx.fillStyle = "white"; ctx.fillRect(mx, y, 22, 6);
-        ctx.font = "bold 5px Arial"; ctx.textAlign = "center"; ctx.fillStyle = "white"; ctx.fillText("DAMICO", mx + 11, y + 15);
-        ctx.font = "5px Arial"; ctx.fillText("CITY LIGHTS", mx + 11, y + 24);
-        ctx.fillStyle = "#fbbf24"; ctx.font = "bold 7px Arial"; ctx.fillText(val, mx + 11, y + 36);
-    }
-
-    function drawYamahaMT07(x, y) {
-        ctx.save(); ctx.translate(x, y);
-        if (isGameOver) ctx.rotate(Math.PI / 2);
-        const scale = width / 360; 
-        ctx.fillStyle = "rgba(0,0,0,0.6)"; ctx.beginPath(); ctx.ellipse(0, 8*scale, 12*scale, 24*scale, 0, 0, Math.PI*2); ctx.fill();
-        const s = 0.95 * scale;
-        ctx.fillStyle = "#000"; ctx.fillRect(-5*s, 20*s, 10*s, 15*s); ctx.fillRect(-5*s, -28*s, 10*s, 12*s);
-        ctx.fillStyle = "#111"; ctx.fillRect(-7*s, -10*s, 14*s, 32*s);
-        ctx.fillStyle = "#000000"; ctx.beginPath(); ctx.roundRect(-10*s, -12*s, 20*s, 18*s, 4); ctx.fill();
-        ctx.fillStyle = "#222"; ctx.beginPath(); ctx.moveTo(0, -12*s); ctx.lineTo(5*s, 6*s); ctx.lineTo(-5*s, 6*s); ctx.fill();
-        ctx.fillStyle = "#1e293b"; ctx.beginPath(); ctx.moveTo(-7*s, 6*s); ctx.lineTo(7*s, 6*s); ctx.lineTo(5*s, 28*s); ctx.lineTo(-5*s, 28*s); ctx.fill();
-        ctx.strokeStyle = "#111"; ctx.lineWidth = 4*s; ctx.beginPath(); ctx.moveTo(-18*s, -15*s); ctx.lineTo(18*s, -15*s); ctx.stroke();
-        ctx.fillStyle = "#000"; ctx.fillRect(-20*s, -17*s, 5*s, 5*s); ctx.fillRect(15*s, -17*s, 5*s, 5*s);
-        if (!isGameOver) { 
-            const xenonGrad = ctx.createLinearGradient(0, -5*s, 0, -300*s);
-            xenonGrad.addColorStop(0, "rgba(200, 240, 255, 0.6)");
-            xenonGrad.addColorStop(1, "rgba(200, 240, 255, 0)");
-            ctx.fillStyle = xenonGrad; ctx.beginPath(); ctx.moveTo(-5*s, -25*s); ctx.lineTo(5*s, -25*s); ctx.lineTo(80*s, -300*s); ctx.lineTo(-80*s, -300*s); ctx.fill(); 
-            ctx.fillStyle = "#e0f7fa"; ctx.beginPath(); ctx.arc(0, -26*s, 3*s, 0, Math.PI*2); ctx.fill();
-        }
-        ctx.restore();
-    }
-
-    function drawNPCMotor(ctx, moto) {
-        ctx.save(); ctx.translate(moto.x + moto.width/2, moto.y + moto.height/2); ctx.rotate(moto.rotation); ctx.translate(-moto.width/2, -moto.height/2);
-        ctx.fillStyle = "rgba(0,0,0,0.5)"; ctx.beginPath(); ctx.ellipse(moto.width/2, moto.height/2+8, 10, 20, 0, 0, Math.PI*2); ctx.fill();
-        const cx = moto.width/2; const cy = moto.height/2;
-        ctx.fillStyle = "#111"; ctx.fillRect(cx-5, cy-25, 10, 10); ctx.fillStyle = moto.color; ctx.beginPath(); ctx.roundRect(cx-8, cy-12, 16, 14, 4); ctx.fill();
-        ctx.restore();
-    }
-
-    function drawDetailedCar(ctx, car) {
-        ctx.save(); ctx.translate(car.x + car.width/2, car.y + car.height/2); ctx.rotate(car.rotation); ctx.translate(-car.width/2, -car.height/2);
-        ctx.fillStyle = "rgba(0,0,0,0.4)"; ctx.fillRect(6, 6, car.width, car.height);
-        ctx.fillStyle = car.color; ctx.beginPath();
-        if (car.type === OBSTACLE_TYPES.PORSCHE) { ctx.roundRect(0, 0, car.width, car.height, 25); ctx.fill(); ctx.fillStyle = "#111"; ctx.fillRect(15, 10, car.width-30, 15); } 
-        else if (car.type === OBSTACLE_TYPES.GWAGON) { ctx.fillRect(0, 0, car.width, car.height); ctx.fillStyle = "#111"; ctx.beginPath(); ctx.arc(car.width/2, 5, 12, 0, Math.PI*2); ctx.fill(); } 
-        else if (car.type === OBSTACLE_TYPES.POLICE) {
-            ctx.roundRect(0, 0, car.width, car.height, 8); ctx.fill();
-            ctx.fillStyle = "#1d4ed8"; ctx.beginPath(); ctx.moveTo(0, 20); ctx.lineTo(car.width, 40); ctx.lineTo(car.width, 60); ctx.lineTo(0, 40); ctx.fill();
-            ctx.fillStyle = "#ef4444"; ctx.beginPath(); ctx.moveTo(0, 60); ctx.lineTo(car.width, 80); ctx.lineTo(car.width, 100); ctx.lineTo(0, 80); ctx.fill();
-            ctx.fillStyle = "#334155"; ctx.fillRect(10, car.height/2 - 5, car.width-20, 10);
-            const blink = Math.floor(Date.now() / 100) % 2 === 0;
-            ctx.fillStyle = blink ? "#2563eb" : "#dc2626"; ctx.fillRect(10, car.height/2 - 5, 10, 10);
-            ctx.fillStyle = !blink ? "#2563eb" : "#dc2626"; ctx.fillRect(car.width-20, car.height/2 - 5, 10, 10);
-        } else { ctx.roundRect(0, 0, car.width, car.height, 10); ctx.fill(); }
-        ctx.fillStyle = "#0f172a"; 
-        if (car.type === OBSTACLE_TYPES.VAN) { ctx.fillRect(8, 15, car.width-16, 12); ctx.fillRect(8, car.height-45, car.width-16, 25); } 
-        else if (car.type === OBSTACLE_TYPES.TESLA) { ctx.fillStyle = "#1e293b"; ctx.fillRect(10, 20, car.width-20, car.height-50); } 
-        else { ctx.fillRect(8, 20, car.width-16, 18); ctx.fillRect(8, car.height-45, car.width-16, 22); }
-        ctx.fillStyle = "#ef4444"; ctx.fillRect(4, 3, 16, 5); ctx.fillRect(car.width-20, 3, 16, 5);
-        ctx.fillStyle = "#fef08a"; ctx.fillRect(4, car.height-10, 16, 5); ctx.fillRect(car.width-20, car.height-10, 16, 5);
-        if (car.isChangingLane) {
-            const blink = Math.floor(Date.now() / 150) % 2 === 0;
-            if (blink) {
-                ctx.fillStyle = "#f97316"; 
-                if (car.targetLane > car.currentLane) { ctx.fillRect(car.width - 12, 2, 10, 7); ctx.fillRect(car.width - 12, car.height - 12, 10, 7); } 
-                else { ctx.fillRect(2, 2, 10, 7); ctx.fillRect(2, car.height - 12, 10, 7); }
-            }
-        }
-        ctx.restore();
-    }
-
-    function animate() {
-        ctx.clearRect(0, 0, width, height);
-        drawRoad();
-        
-        const move = gameState === 'PLAYING' || (gameState === 'INTRO' && introOverlay.style.opacity === '0');
-
-        if (move) {
-            updateDifficulty();
-            bikeX += (targetBikeX - bikeX) * 0.25;
-            bikeX = Math.max(25, Math.min(width - 25, bikeX));
-            if (gameState === 'PLAYING') {
-                gameFrame++;
-                updateSubtitles();
-            }
-        }
-
-        buildings.forEach((b, i) => {
-            if (move) b.y += baseSpeed * 0.6;
-            ctx.fillStyle = b.color; ctx.fillRect(b.x, b.y, b.w, b.h);
-            if(b.y > height) { buildings.splice(i, 1); spawnBuilding(-500); }
-        });
-        markers.forEach((m, i) => {
-            if (move) m.y += baseSpeed;
-            drawHectometer(m.y, m.val);
-            if (m.y > height) { markers.splice(i, 1); spawnMarker(-100); }
-        });
-        roadSigns.forEach((sign, i) => {
-            if (move) sign.y += baseSpeed * 0.95;
-            ctx.fillStyle = "#003399"; ctx.beginPath(); ctx.roundRect(10, sign.y, width-20, 60, 6); ctx.fill();
-            ctx.strokeStyle = "white"; ctx.lineWidth = 2; ctx.strokeRect(15, sign.y + 5, width - 30, 50);
-            ctx.fillStyle = "white"; ctx.font = "bold 13px Arial"; ctx.textAlign = "center"; ctx.fillText(sign.text, width/2, sign.y+35);
-            if(sign.y > height) { roadSigns.splice(i, 1); spawnSign(); }
-        });
-
-        cars.sort((a,b) => a.y - b.y).forEach((obj, i) => {
-            if (move) obj.y += (baseSpeed * 0.5) + obj.speedOffset;
-            
-            if (gameState === 'PLAYING') {
-                // Game Logic
-                let carAhead = null, minDist = Infinity;
-                for(let j=0; j<cars.length; j++) {
-                    let other = cars[j];
-                    if(obj !== other && other.currentLane === obj.currentLane) {
-                        if (other.y > obj.y) { let d = other.y - obj.y; if (d < minDist) { minDist = d; carAhead = other; } }
-                    }
-                }
-                if (carAhead) {
-                    let safeDist = obj.height + 40; 
-                    if (minDist < safeDist + 60) {
-                         let aheadSpeed = (baseSpeed * 0.5) + carAhead.speedOffset;
-                         let currentSpeed = (baseSpeed * 0.5) + obj.speedOffset;
-                         if (currentSpeed > aheadSpeed) obj.speedOffset -= 0.1; 
-                         if (minDist < safeDist) obj.y -= 1; 
-                    }
-                }
-                if (!obj.isChangingLane && Math.random() < laneChangeChance) {
-                    const next = Math.random() > 0.5 ? obj.currentLane+1 : obj.currentLane-1;
-                    if(next >= 0 && next <= 2) {
-                        const minSafeDist = 320; 
-                        const isBlocked = cars.some(other => {
-                            if (other === obj) return false;
-                            if (other.currentLane === next || other.targetLane === next) {
-                                if (Math.abs(other.y - obj.y) < minSafeDist) return true;
-                            }
-                            return false;
-                        });
-                        if (!isBlocked) { obj.targetLane = next; obj.isChangingLane = true; }
-                    }
-                }
-                if (obj.isChangingLane) {
-                    const tx = (obj.targetLane * (width/3)) + (width/6) - (obj.width/2);
-                    obj.x += (tx - obj.x) * 0.1; obj.rotation = (tx - obj.x) * 0.005;
-                    if(Math.abs(tx - obj.x) < 2) { obj.currentLane = obj.targetLane; obj.isChangingLane = false; obj.rotation = 0; }
-                }
-                if (checkCollision(bikeX, height*0.8, obj)) triggerGameOver();
-                if (!obj.passed && obj.y > height*0.8 + 70) { obj.passed = true; score++; scoreElement.textContent = score; }
-            }
-            obj.isBike ? drawNPCMotor(ctx, obj) : drawDetailedCar(ctx, obj);
-            if(obj.y > height + 400) { cars.splice(i, 1); spawnObstacle(-Math.max(250, 450-score*2)); }
-        });
-
-        drawYamahaMT07(bikeX, height*0.8);
-        window.requestAnimationFrame(animate);
-    }
-
-    if(spotifyLinkBtn) spotifyLinkBtn.href = SPOTIFY_URL;
-    startScreen.addEventListener('click', handleStart);
-    startScreen.addEventListener('touchstart', handleStart);
-    restartBtn.addEventListener('click', (e) => { e.stopPropagation(); resetGame(); startIntro(); });
-    muteBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        isMuted = !isMuted;
-        if(isMuted) { bgMusic.pause(); muteBtn.textContent = "🔇"; muteBtn.style.opacity = "0.5"; }
-        else { bgMusic.play().catch(()=>{}); muteBtn.textContent = "🔊"; muteBtn.style.opacity = "1"; musicStarted = true; }
-    });
-    window.addEventListener('resize', resize);
-    window.addEventListener('mousemove', (e) => { if (gameState === 'PLAYING' || gameState === 'INTRO') targetBikeX = (e.clientX - canvas.getBoundingClientRect().left) * (width / canvas.getBoundingClientRect().width); });
-    window.addEventListener('touchmove', (e) => { if (gameState === 'PLAYING' || gameState === 'INTRO') targetBikeX = (e.touches[0].clientX - canvas.getBoundingClientRect().left) * (width / canvas.getBoundingClientRect().width); e.preventDefault(); }, {passive: false});
-
-    // Start everything
-    resize();
-    resetGame();
-    loadMusic();
-    window.requestAnimationFrame(animate);
-
+startScreen.addEventListener("click", handleStart);
+window.addEventListener("resize", resize);
 </script>
+
 </body>
 </html>
