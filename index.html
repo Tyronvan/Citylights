@@ -238,7 +238,6 @@
 </head>
 <body>
 
-<!-- ERROR LOG DIV TOEVOEGEN -->
 <div id="error-log"></div>
 
 <audio id="bgMusic" loop preload="auto">
@@ -314,9 +313,14 @@
     };
 
     try {
-        const MUSIC_URL = "tune.mp3";
+        // ==========================================
+        // CONFIGURATIE BESTANDSNAAM
+        // ==========================================
+        const MUSIC_URL = "CITYLIGHTS.mp3"; // <-- AANGEPAST NAAR JOUW BESTANDSNAAM
+        
         const SPOTIFY_URL = "https://open.spotify.com/artist/1mh3j5kMitpCGzNpHb01NC?si=GTx2lyj0QLy_j7HyrdHWWg"; 
         
+        // 3. EIGEN MOTOR AFBEELDING (BASE64) - OPTIONEEL
         const CUSTOM_MOTOR_IMAGE = ""; 
 
         const canvas = document.getElementById('motorCanvas');
