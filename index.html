@@ -313,14 +313,9 @@
     };
 
     try {
-        // ==========================================
-        // CONFIGURATIE BESTANDSNAAM
-        // ==========================================
         const MUSIC_URL = "CITYLIGHTS.mp3"; // <-- AANGEPAST NAAR JOUW BESTANDSNAAM
-        
         const SPOTIFY_URL = "https://open.spotify.com/artist/1mh3j5kMitpCGzNpHb01NC?si=GTx2lyj0QLy_j7HyrdHWWg"; 
         
-        // 3. EIGEN MOTOR AFBEELDING (BASE64) - OPTIONEEL
         const CUSTOM_MOTOR_IMAGE = ""; 
 
         const canvas = document.getElementById('motorCanvas');
@@ -813,8 +808,7 @@
 
         window.addEventListener('mousemove', (e) => updateInput(e.clientX));
         window.addEventListener('touchmove', (e) => { updateInput(e.touches[0].clientX); e.preventDefault(); }, {passive: false});
-        redirectTrigger.addEventListener('touchstart', handleRedirect);
-        redirectTrigger.addEventListener('mousedown', handleRedirect);
+        
         restartBtn.addEventListener('click', (e) => { 
             e.stopPropagation(); 
             resetGame(); 
