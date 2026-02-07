@@ -234,6 +234,13 @@
             display: none;
         }
         #muteBtn:active { transform: scale(0.9); }
+        
+        #audio-status {
+            color: #666;
+            font-size: 10px;
+            margin-top: 5px;
+            font-family: monospace;
+        }
     </style>
 </head>
 <body>
@@ -254,6 +261,7 @@
         <h1 class="text-4xl font-black mb-4 tracking-widest game-title">RACE TO LEVEL 100</h1>
         <p class="text-gray-400 animate-pulse uppercase tracking-widest text-sm">PRESS TO START ENGINE</p>
         <p class="text-gray-600 text-[10px] mt-4">(Audio check: Zet je telefoon van stil af)</p>
+        <p id="audio-status">Status: Wachten...</p>
     </div>
 
     <!-- INTRO OVERLAY -->
@@ -302,7 +310,6 @@
 </div>
 
 <script>
-    // ERROR HANDLER
     window.onerror = function(msg, url, lineNo, columnNo, error) {
         const log = document.getElementById('error-log');
         if(log) {
@@ -313,9 +320,8 @@
     };
 
     try {
-        const MUSIC_URL = "CITYLIGHTS.mp3"; // <-- AANGEPAST NAAR JOUW BESTANDSNAAM
+        const MUSIC_URL = "CITYLIGHTS.mp3"; 
         const SPOTIFY_URL = "https://open.spotify.com/artist/1mh3j5kMitpCGzNpHb01NC?si=GTx2lyj0QLy_j7HyrdHWWg"; 
-        
         const CUSTOM_MOTOR_IMAGE = ""; 
 
         const canvas = document.getElementById('motorCanvas');
@@ -337,9 +343,28 @@
         const speedDisplay = document.getElementById('speedDisplay');
         const spotifyLinkBtn = document.getElementById('spotifyLink');
         const subtitleElement = document.getElementById('subtitleText');
+        const audioStatus = document.getElementById('audio-status');
 
         if(spotifyLinkBtn) spotifyLinkBtn.href = SPOTIFY_URL;
-        if(bgMusic) bgMusic.src = MUSIC_URL;
+        
+        // Audio setup met extra checks
+        if(bgMusic) {
+            bgMusic.src = MUSIC_URL;
+            
+            bgMusic.addEventListener('canplaythrough', () => {
+                if(audioStatus) audioStatus.textContent = "Audio: Klaar (Tik om te starten)";
+                audioStatus.style.color = "#4ade80"; // Groen
+            });
+            
+            bgMusic.addEventListener('error', (e) => {
+                const err = bgMusic.error;
+                let msg = "Onbekend";
+                if(err.code === 4) msg = "Niet gevonden (404) - Check naam!";
+                if(err.code === 3) msg = "Decodeerfout";
+                if(audioStatus) audioStatus.textContent = "Audio Fout: " + msg;
+                if(audioStatus) audioStatus.style.color = "#ef4444"; // Rood
+            });
+        }
 
         const playerImg = new Image();
         if(CUSTOM_MOTOR_IMAGE && CUSTOM_MOTOR_IMAGE.length > 10) {
@@ -419,6 +444,7 @@
             window.requestAnimationFrame(animate);
         }
 
+        // Start Handler
         function handleStart(e) {
             if(e) e.preventDefault();
             if (gameState === 'START') {
@@ -436,8 +462,14 @@
             if (!musicStarted && !isMuted) {
                 bgMusic.volume = 1.0; 
                 bgMusic.play()
-                    .then(() => { musicStarted = true; })
-                    .catch(error => { console.log("Muziek start niet (mogelijk user interaction nodig): " + error); });
+                    .then(() => { 
+                        musicStarted = true; 
+                        if(audioStatus) audioStatus.textContent = "Audio: Speelt!";
+                    })
+                    .catch(error => { 
+                        console.log("Audio play failed: " + error);
+                        if(audioStatus) audioStatus.textContent = "Audio geblokkeerd (tik nogmaals)";
+                    });
             }
 
             setTimeout(() => { if(introText1) introText1.classList.add('visible'); }, 2000);
@@ -795,6 +827,8 @@
                 drawYamahaMT07(bikeX, height*0.8);
             } catch(e) {
                 console.error(e);
+                document.getElementById('error-log').style.display = 'block';
+                document.getElementById('error-log').textContent += e + "\n";
             }
             window.requestAnimationFrame(animate);
         }
@@ -808,7 +842,8 @@
 
         window.addEventListener('mousemove', (e) => updateInput(e.clientX));
         window.addEventListener('touchmove', (e) => { updateInput(e.touches[0].clientX); e.preventDefault(); }, {passive: false});
-        
+        redirectTrigger.addEventListener('touchstart', handleRedirect);
+        redirectTrigger.addEventListener('mousedown', handleRedirect);
         restartBtn.addEventListener('click', (e) => { 
             e.stopPropagation(); 
             resetGame(); 
